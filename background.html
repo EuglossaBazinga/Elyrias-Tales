@@ -7,9 +7,12 @@
   <body>
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { BASE_URL, EXTENSION_ID } from "./shared.js";
+      import { BASE_URL, EXTENSION_ID, syncAllOverlays } from "./shared.js";
 
       OBR.onReady(() => {
+        syncAllOverlays();
+        OBR.scene.items.onChange(() => syncAllOverlays());
+
         OBR.contextMenu.create({
           id: `${EXTENSION_ID}/edit-stats`,
           icons: [

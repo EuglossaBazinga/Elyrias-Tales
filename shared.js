@@ -1,8 +1,10 @@
-import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
+import OBR, { buildShape, buildText } from "https://esm.sh/@owlbear-rodeo/sdk";
 
 export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
+export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
+let overlaySyncing = false;
 
 export const STAT_DEFS = {
   hp: {
@@ -84,6 +86,55 @@ export async function saveStats(itemIds, stats) {
   });
 }
 
+export async function syncAllOverlays() {
+  const items = await OBR.scene.items.getItems();
+  const tokenIds = items
+    .filter((item) => item.metadata?.[METADATA_KEY] && !item.metadata?.[OVERLAY_KEY])
+    .map((item) => item.id);
+  await syncOverlaysForItems(tokenIds);
+}
+
+export async function syncOverlaysForItems(itemIds) {
+  if (!itemIds.length || overlaySyncing) return;
+  overlaySyncing = true;
+  const allItems = await OBR.scene.items.getItems();
+  const tokens = allItems.filter((item) => itemIds.includes(item.id));
+  const oldOverlays = allItems.filter((item) => itemIds.includes(item.metadata?.[OVERLAY_KEY]?.parentId));
+  const oldByParent = new Map();
+
+  for (const overlay of oldOverlays) {
+    const parentId = overlay.metadata?.[OVERLAY_KEY]?.parentId;
+    if (!oldByParent.has(parentId)) oldByParent.set(parentId, []);
+    oldByParent.get(parentId).push(overlay);
+  }
+
+  const toDelete = [];
+  const overlays = [];
+  for (const token of tokens) {
+    const stats = readStats(token);
+    const signature = overlaySignature(stats);
+    const existing = oldByParent.get(token.id) ?? [];
+    if (existing.length >= 7 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
+      continue;
+    }
+
+    toDelete.push(...existing.map((item) => item.id));
+    if (!stats.hp.max && !stats.armor.current) continue;
+    overlays.push(...buildOverlayItems(token, stats));
+  }
+
+  try {
+    if (toDelete.length > 0) {
+      await OBR.scene.items.deleteItems(toDelete);
+    }
+    if (overlays.length > 0) {
+      await OBR.scene.items.addItems(overlays);
+    }
+  } finally {
+    overlaySyncing = false;
+  }
+}
+
 export function normalizeStats(raw = EMPTY_STATS) {
   const result = copyStats(EMPTY_STATS);
   for (const key of Object.keys(result)) {
@@ -101,6 +152,201 @@ export function normalizeStats(raw = EMPTY_STATS) {
 export function percent(stat) {
   if (!stat.max || stat.max <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((stat.current / stat.max) * 100)));
+}
+
+function buildOverlayItems(token, stats) {
+  const size = getTokenSize(token);
+  const barWidth = Math.round(size * 0.9);
+  const barHeight = Math.max(7, Math.round(size * 0.12));
+  const lineHeight = Math.max(2, Math.round(size * 0.035));
+  const x = token.position.x;
+  const y = token.position.y + Math.round(size * 0.62);
+  const visible = stats.visibility !== "gm";
+  const common = {
+    attachedTo: token.id,
+    locked: true,
+    disableHit: true,
+    visible,
+    metadata: {
+      [OVERLAY_KEY]: {
+        parentId: token.id
+      }
+    }
+  };
+
+  const hpPercent = percent(stats.hp) / 100;
+  const fpPercent = percent(stats.fp) / 100;
+  const mpPercent = percent(stats.mp) / 100;
+  const hpText = `${stats.hp.current}/${stats.hp.max}`;
+  const signature = overlaySignature(stats);
+  common.metadata[OVERLAY_KEY].signature = signature;
+
+  return [
+    makeRect({
+      ...common,
+      role: "hp-bg",
+      x,
+      y,
+      width: barWidth,
+      height: barHeight,
+      color: "#6b2026",
+      z: 1
+    }),
+    makeRect({
+      ...common,
+      role: "hp-fill",
+      x: x - barWidth / 2 + (barWidth * hpPercent) / 2,
+      y,
+      width: Math.max(2, barWidth * hpPercent),
+      height: barHeight,
+      color: "#d83b44",
+      z: 2
+    }),
+    makeText({
+      ...common,
+      role: "hp-text",
+      x,
+      y: y - 1,
+      text: hpText,
+      size: Math.max(11, Math.round(size * 0.18)),
+      z: 3
+    }),
+    makeRect({
+      ...common,
+      role: "fp-line",
+      x: x - barWidth / 2 + (barWidth * fpPercent) / 2,
+      y: y + barHeight / 2 + lineHeight + 1,
+      width: Math.max(2, barWidth * fpPercent),
+      height: lineHeight,
+      color: "#f3d640",
+      z: 2
+    }),
+    makeRect({
+      ...common,
+      role: "mp-line",
+      x: x - barWidth / 2 + (barWidth * mpPercent) / 2,
+      y: y + barHeight / 2 + lineHeight * 2 + 3,
+      width: Math.max(2, barWidth * mpPercent),
+      height: lineHeight,
+      color: "#2d7ff0",
+      z: 2
+    }),
+    makeCircle({
+      ...common,
+      role: "ac-bg",
+      x: x + barWidth / 2 + Math.round(size * 0.13),
+      y: y - Math.round(size * 0.17),
+      diameter: Math.max(18, Math.round(size * 0.28)),
+      color: "#5671aa",
+      z: 2
+    }),
+    makeText({
+      ...common,
+      role: "ac-text",
+      x: x + barWidth / 2 + Math.round(size * 0.13),
+      y: y - Math.round(size * 0.17),
+      text: `${stats.armor.current}`,
+      size: Math.max(10, Math.round(size * 0.16)),
+      z: 3
+    })
+  ];
+}
+
+function makeRect(options) {
+  const item = buildShape()
+    .shapeType("RECTANGLE")
+    .position({ x: options.x, y: options.y })
+    .width(options.width)
+    .height(options.height)
+    .fillColor(options.color)
+    .strokeWidth(0)
+    .layer("ATTACHMENT")
+    .attachedTo(options.attachedTo)
+    .locked(options.locked)
+    .disableHit(options.disableHit)
+    .metadata(withOverlayRole(options.metadata, options.role))
+    .build();
+  item.visible = options.visible;
+  item.zIndex = options.z;
+  return item;
+}
+
+function makeCircle(options) {
+  const item = buildShape()
+    .shapeType("CIRCLE")
+    .position({ x: options.x, y: options.y })
+    .width(options.diameter)
+    .height(options.diameter)
+    .fillColor(options.color)
+    .strokeColor("#ffffff")
+    .strokeWidth(1)
+    .layer("ATTACHMENT")
+    .attachedTo(options.attachedTo)
+    .locked(options.locked)
+    .disableHit(options.disableHit)
+    .metadata(withOverlayRole(options.metadata, options.role))
+    .build();
+  item.visible = options.visible;
+  item.zIndex = options.z;
+  return item;
+}
+
+function makeText(options) {
+  const item = buildText()
+    .text(options.text)
+    .position({ x: options.x, y: options.y })
+    .fontSize(options.size)
+    .fontWeight(700)
+    .textAlign("CENTER")
+    .textAlignVertical("MIDDLE")
+    .fillColor("#ffffff")
+    .strokeColor("#000000")
+    .strokeWidth(2)
+    .layer("ATTACHMENT")
+    .attachedTo(options.attachedTo)
+    .locked(options.locked)
+    .disableHit(options.disableHit)
+    .metadata(withOverlayRole(options.metadata, options.role))
+    .build();
+  item.visible = options.visible;
+  item.zIndex = options.z;
+  return item;
+}
+
+function withOverlayRole(metadata, role) {
+  return {
+    ...metadata,
+    [OVERLAY_KEY]: {
+      ...metadata[OVERLAY_KEY],
+      role
+    }
+  };
+}
+
+function getTokenSize(token) {
+  const candidates = [
+    token.grid?.dpi,
+    token.image?.grid?.dpi,
+    token.image?.width,
+    token.image?.height,
+    token.width,
+    token.height
+  ].filter((value) => Number.isFinite(value) && value > 0);
+  const raw = candidates[0] ?? 70;
+  return Math.max(48, Math.min(90, raw));
+}
+
+function overlaySignature(stats) {
+  return [
+    stats.hp.current,
+    stats.hp.max,
+    stats.fp.current,
+    stats.fp.max,
+    stats.mp.current,
+    stats.mp.max,
+    stats.armor.current,
+    stats.visibility
+  ].join(":");
 }
 
 export function numberOrZero(value) {

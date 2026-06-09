@@ -63,7 +63,7 @@
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { getSelectedItems, readStats, saveStats } from "./shared.js";
+      import { getSelectedItems, readStats, saveStats, syncOverlaysForItems } from "./shared.js";
 
       const fields = {
         hpCurrent: document.querySelector("#hpCurrent"),
@@ -107,6 +107,7 @@
         if (saving || items.length === 0) return;
         saving = true;
         await saveStats(items.map((item) => item.id), stats);
+        await syncOverlaysForItems(items.map((item) => item.id));
         saving = false;
       }
 

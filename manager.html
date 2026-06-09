@@ -35,7 +35,8 @@
         openStatWindow,
         percent,
         readStats,
-        saveStats
+        saveStats,
+        syncOverlaysForItems
       } from "./shared.js";
 
       const statsElement = document.querySelector("#stats");
@@ -95,6 +96,7 @@
       refreshButton.addEventListener("click", load);
       saveButton.addEventListener("click", async () => {
         await saveStats(items.map((item) => item.id), stats);
+        await syncOverlaysForItems(items.map((item) => item.id));
         await load();
       });
       fpButton.addEventListener("click", () => openStatWindow("fp"));
