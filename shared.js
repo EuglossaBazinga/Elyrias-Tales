@@ -175,7 +175,7 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 0.78);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x;
+  const x = token.position.x + size / 2;
   const y = token.position.y + Math.round(size * 0.74);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 - acDiameter * 0.12;
@@ -231,6 +231,8 @@ function buildOverlayItems(token, stats, builders) {
       y: y - 1,
       text: hpText,
       size: Math.max(11, Math.round(size * 0.18)),
+      width: barWidth,
+      height: barHeight * 1.8,
       z: 10003
     }),
     makeRect({
@@ -273,6 +275,8 @@ function buildOverlayItems(token, stats, builders) {
       y: acY,
       text: `${stats.armor.current}`,
       size: Math.max(8, Math.round(acDiameter * 0.48)),
+      width: acDiameter,
+      height: acDiameter,
       z: 10004
     })
   ];
@@ -282,7 +286,7 @@ function makeRect(options) {
   const item = options.builders.buildShape()
     .name(`Stat Bubble ${options.role}`)
     .shapeType("RECTANGLE")
-    .position({ x: options.x, y: options.y })
+    .position({ x: options.x - options.width / 2, y: options.y - options.height / 2 })
     .width(options.width)
     .height(options.height)
     .fillColor(options.color)
@@ -303,7 +307,7 @@ function makeCircle(options) {
   const item = options.builders.buildShape()
     .name(`Stat Bubble ${options.role}`)
     .shapeType("CIRCLE")
-    .position({ x: options.x, y: options.y })
+    .position({ x: options.x - options.diameter / 2, y: options.y - options.diameter / 2 })
     .width(options.diameter)
     .height(options.diameter)
     .fillColor(options.color)
@@ -322,13 +326,15 @@ function makeCircle(options) {
 }
 
 function makeText(options) {
+  const textWidth = options.width ?? Math.max(28, options.size * String(options.text).length * 0.62);
+  const textHeight = options.height ?? Math.max(14, options.size * 1.25);
   const item = options.builders.buildText()
     .name(`Stat Bubble ${options.role}`)
     .plainText(options.text)
     .textType("PLAIN")
-    .width("AUTO")
-    .height("AUTO")
-    .position({ x: options.x, y: options.y })
+    .width(textWidth)
+    .height(textHeight)
+    .position({ x: options.x - textWidth / 2, y: options.y - textHeight / 2 })
     .fontSize(options.size)
     .fontWeight(700)
     .textAlign("CENTER")
