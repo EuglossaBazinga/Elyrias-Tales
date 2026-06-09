@@ -172,11 +172,14 @@ async function loadBuilders() {
 
 function buildOverlayItems(token, stats, builders) {
   const size = getTokenSize(token);
-  const barWidth = Math.round(size * 0.9);
+  const barWidth = Math.round(size * 0.78);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
   const x = token.position.x;
-  const y = token.position.y + Math.round(size * 0.62);
+  const y = token.position.y + Math.round(size * 0.74);
+  const acDiameter = Math.max(18, Math.round(size * 0.28));
+  const acX = x + barWidth / 2 - acDiameter * 0.12;
+  const acY = y - Math.round(size * 0.12);
   const visible = stats.visibility !== "gm";
   const common = {
     attachedTo: token.id,
@@ -207,7 +210,7 @@ function buildOverlayItems(token, stats, builders) {
       width: barWidth,
       height: barHeight,
       color: "#6b2026",
-      z: 1
+      z: 10001
     }),
     makeRect({
       builders,
@@ -218,7 +221,7 @@ function buildOverlayItems(token, stats, builders) {
       width: Math.max(2, barWidth * hpPercent),
       height: barHeight,
       color: "#d83b44",
-      z: 2
+      z: 10002
     }),
     makeText({
       builders,
@@ -228,7 +231,7 @@ function buildOverlayItems(token, stats, builders) {
       y: y - 1,
       text: hpText,
       size: Math.max(11, Math.round(size * 0.18)),
-      z: 3
+      z: 10003
     }),
     makeRect({
       builders,
@@ -239,7 +242,7 @@ function buildOverlayItems(token, stats, builders) {
       width: Math.max(2, barWidth * fpPercent),
       height: lineHeight,
       color: "#f3d640",
-      z: 2
+      z: 10002
     }),
     makeRect({
       builders,
@@ -250,27 +253,27 @@ function buildOverlayItems(token, stats, builders) {
       width: Math.max(2, barWidth * mpPercent),
       height: lineHeight,
       color: "#2d7ff0",
-      z: 2
+      z: 10002
     }),
     makeCircle({
       builders,
       ...common,
       role: "ac-bg",
-      x: x + barWidth / 2 + Math.round(size * 0.13),
-      y: y - Math.round(size * 0.17),
-      diameter: Math.max(18, Math.round(size * 0.28)),
+      x: acX,
+      y: acY,
+      diameter: acDiameter,
       color: "#5671aa",
-      z: 2
+      z: 10003
     }),
     makeText({
       builders,
       ...common,
       role: "ac-text",
-      x: x + barWidth / 2 + Math.round(size * 0.13),
-      y: y - Math.round(size * 0.17),
+      x: acX,
+      y: acY,
       text: `${stats.armor.current}`,
-      size: Math.max(10, Math.round(size * 0.16)),
-      z: 3
+      size: Math.max(8, Math.round(acDiameter * 0.48)),
+      z: 10004
     })
   ];
 }
@@ -284,7 +287,7 @@ function makeRect(options) {
     .height(options.height)
     .fillColor(options.color)
     .strokeWidth(0)
-    .layer("ATTACHMENT")
+    .layer("CONTROL")
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
@@ -306,7 +309,7 @@ function makeCircle(options) {
     .fillColor(options.color)
     .strokeColor("#ffffff")
     .strokeWidth(1)
-    .layer("ATTACHMENT")
+    .layer("CONTROL")
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
@@ -333,7 +336,7 @@ function makeText(options) {
     .fillColor("#ffffff")
     .strokeColor("#000000")
     .strokeWidth(2)
-    .layer("ATTACHMENT")
+    .layer("CONTROL")
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
