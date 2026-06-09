@@ -11,9 +11,15 @@
       <section class="wide-card hp-card">
         <div class="label">Hit Points</div>
         <div class="hp-inputs">
-          <input id="hpCurrent" aria-label="Current hit points" inputmode="text" />
+          <label class="edit-field">
+            <span class="previous-value" aria-hidden="true"></span>
+            <input id="hpCurrent" aria-label="Current hit points" inputmode="text" />
+          </label>
           <span>/</span>
-          <input id="hpMax" aria-label="Maximum hit points" inputmode="text" />
+          <label class="edit-field">
+            <span class="previous-value" aria-hidden="true"></span>
+            <input id="hpMax" aria-label="Maximum hit points" inputmode="text" />
+          </label>
         </div>
         <div class="hint">& maximum</div>
       </section>
@@ -22,9 +28,15 @@
         <section class="wide-card fp-card">
           <div class="label">Focus Points</div>
           <div class="wide-inputs">
-            <input id="fpCurrent" aria-label="Current focus points" inputmode="text" />
+            <label class="edit-field">
+              <span class="previous-value" aria-hidden="true"></span>
+              <input id="fpCurrent" aria-label="Current focus points" inputmode="text" />
+            </label>
             <span>/</span>
-            <input id="fpMax" aria-label="Maximum focus points" inputmode="text" />
+            <label class="edit-field">
+              <span class="previous-value" aria-hidden="true"></span>
+              <input id="fpMax" aria-label="Maximum focus points" inputmode="text" />
+            </label>
           </div>
           <div class="hint">& maximum</div>
         </section>
@@ -32,9 +44,15 @@
         <section class="wide-card mp-card">
           <div class="label">Magic Points</div>
           <div class="wide-inputs">
-            <input id="mpCurrent" aria-label="Current magic points" inputmode="text" />
+            <label class="edit-field">
+              <span class="previous-value" aria-hidden="true"></span>
+              <input id="mpCurrent" aria-label="Current magic points" inputmode="text" />
+            </label>
             <span>/</span>
-            <input id="mpMax" aria-label="Maximum magic points" inputmode="text" />
+            <label class="edit-field">
+              <span class="previous-value" aria-hidden="true"></span>
+              <input id="mpMax" aria-label="Maximum magic points" inputmode="text" />
+            </label>
           </div>
           <div class="hint">& maximum</div>
         </section>
@@ -43,12 +61,18 @@
       <section class="bubble-grid">
         <label class="bubble temp">
           <span>Temporary</span>
-          <input id="temp" aria-label="Temporary hit points" inputmode="text" />
+          <span class="edit-field circle-field">
+            <span class="previous-value" aria-hidden="true"></span>
+            <input id="temp" aria-label="Temporary hit points" inputmode="text" />
+          </span>
           <span>Hit Points</span>
         </label>
         <label class="bubble armor">
           <span>Armor</span>
-          <input id="armor" aria-label="Armor class" inputmode="text" />
+          <span class="edit-field circle-field">
+            <span class="previous-value" aria-hidden="true"></span>
+            <input id="armor" aria-label="Armor class" inputmode="text" />
+          </span>
           <span>Class</span>
         </label>
       </section>
@@ -83,18 +107,23 @@
       let saving = false;
 
       function render() {
-        fields.hpCurrent.value = stats.hp.current;
-        fields.hpMax.value = stats.hp.max;
-        fields.temp.value = stats.temp.current;
-        fields.armor.value = stats.armor.current;
-        fields.fpCurrent.value = stats.fp.current;
-        fields.fpMax.value = stats.fp.max;
-        fields.mpCurrent.value = stats.mp.current;
-        fields.mpMax.value = stats.mp.max;
+        setInputValue(fields.hpCurrent, stats.hp.current);
+        setInputValue(fields.hpMax, stats.hp.max);
+        setInputValue(fields.temp, stats.temp.current);
+        setInputValue(fields.armor, stats.armor.current);
+        setInputValue(fields.fpCurrent, stats.fp.current);
+        setInputValue(fields.fpMax, stats.fp.max);
+        setInputValue(fields.mpCurrent, stats.mp.current);
+        setInputValue(fields.mpMax, stats.mp.max);
         playerEditable.disabled = items.length === 0;
         playerEditable.classList.toggle("active", stats.playerEditable);
         visibleAll.classList.toggle("active", stats.visibility !== "gm");
         visibleGm.classList.toggle("active", stats.visibility === "gm");
+      }
+
+      function setInputValue(input, value) {
+        if (input.dataset.editing === "true") return;
+        input.value = value;
       }
 
       async function load() {
@@ -117,20 +146,40 @@
         }
       }
 
-      function applyInput(stat, field, rawValue) {
-        const currentValue = stats[stat][field] ?? 0;
+      function applyInput(originalValue, rawValue) {
         const value = rawValue.trim();
-        if (/^[+-]\d+$/.test(value)) return currentValue + Number(value);
+        if (value === "") return originalValue;
+        if (/^[+-]\d+$/.test(value)) return originalValue + Number(value);
         const number = Number(value);
-        return Number.isFinite(number) ? number : currentValue;
+        return Number.isFinite(number) ? number : originalValue;
       }
 
       function bind(input, stat, field) {
-        input.addEventListener("change", async () => {
-          stats[stat][field] = applyInput(stat, field, input.value);
+        const wrapper = input.closest(".edit-field");
+        const previous = wrapper.querySelector(".previous-value");
+
+        input.addEventListener("focus", () => {
+          if (input.dataset.editing === "true") return;
+          const original = stats[stat][field] ?? 0;
+          input.dataset.editing = "true";
+          input.dataset.original = String(original);
+          previous.textContent = original;
+          wrapper.classList.add("editing");
+          input.value = "";
+        });
+
+        input.addEventListener("blur", async () => {
+          if (input.dataset.editing !== "true") return;
+          const original = Number(input.dataset.original) || 0;
+          stats[stat][field] = applyInput(original, input.value);
+          delete input.dataset.editing;
+          delete input.dataset.original;
+          previous.textContent = "";
+          wrapper.classList.remove("editing");
           render();
           await persist();
         });
+
         input.addEventListener("keydown", (event) => {
           if (event.key === "Enter") input.blur();
         });

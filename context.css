@@ -71,11 +71,40 @@ main {
   background: rgba(48, 89, 143, 0.72);
 }
 
-.hp-inputs span,
-.wide-inputs span {
+.hp-inputs > span,
+.wide-inputs > span {
   color: white;
   font-size: 19px;
   font-weight: 850;
+}
+
+.edit-field {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  height: 30px;
+  place-items: center;
+}
+
+.previous-value {
+  display: none;
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+}
+
+.edit-field.editing .previous-value {
+  display: block;
+}
+
+.edit-field.editing input {
+  transform: translateY(7px);
 }
 
 input {
@@ -113,6 +142,24 @@ input {
   border: 2px solid var(--ring);
   background: var(--fill);
   font-size: 18px;
+}
+
+.circle-field {
+  width: 52px;
+  height: 52px;
+}
+
+.circle-field .previous-value {
+  top: 8px;
+  max-width: none;
+  font-size: 11px;
+  line-height: 1;
+  text-transform: none;
+}
+
+.circle-field.editing input {
+  transform: translateY(9px);
+  font-size: 16px;
 }
 
 .bubble span {

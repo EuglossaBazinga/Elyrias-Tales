@@ -4,6 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-2";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -175,10 +176,10 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 0.78);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x + size / 2;
+  const x = token.position.x;
   const y = token.position.y + Math.round(size * 0.74);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
-  const acX = x + barWidth / 2 - acDiameter * 0.12;
+  const acX = x + barWidth / 2 - acDiameter * 0.05;
   const acY = y - Math.round(size * 0.12);
   const visible = stats.visibility !== "gm";
   const common = {
@@ -271,8 +272,8 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "ac-text",
-      x: acX,
-      y: acY,
+      x: acX - acDiameter * 0.08,
+      y: acY - acDiameter * 0.02,
       text: `${stats.armor.current}`,
       size: Math.max(8, Math.round(acDiameter * 0.48)),
       width: acDiameter,
@@ -379,6 +380,7 @@ function getTokenSize(token) {
 
 function overlaySignature(stats) {
   return [
+    OVERLAY_LAYOUT_VERSION,
     stats.hp.current,
     stats.hp.max,
     stats.fp.current,
