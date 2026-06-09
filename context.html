@@ -8,7 +8,7 @@
   </head>
   <body>
     <main>
-      <section class="hp-card">
+      <section class="wide-card hp-card">
         <div class="label">Hit Points</div>
         <div class="hp-inputs">
           <input id="hpCurrent" aria-label="Current hit points" inputmode="text" />
@@ -16,6 +16,28 @@
           <input id="hpMax" aria-label="Maximum hit points" inputmode="text" />
         </div>
         <div class="hint">& maximum</div>
+      </section>
+
+      <section class="wide-row">
+        <section class="wide-card fp-card">
+          <div class="label">Focus Points</div>
+          <div class="wide-inputs">
+            <input id="fpCurrent" aria-label="Current focus points" inputmode="text" />
+            <span>/</span>
+            <input id="fpMax" aria-label="Maximum focus points" inputmode="text" />
+          </div>
+          <div class="hint">& maximum</div>
+        </section>
+
+        <section class="wide-card mp-card">
+          <div class="label">Magic Points</div>
+          <div class="wide-inputs">
+            <input id="mpCurrent" aria-label="Current magic points" inputmode="text" />
+            <span>/</span>
+            <input id="mpMax" aria-label="Maximum magic points" inputmode="text" />
+          </div>
+          <div class="hint">& maximum</div>
+        </section>
       </section>
 
       <section class="bubble-grid">
@@ -29,16 +51,11 @@
           <input id="armor" aria-label="Armor class" inputmode="text" />
           <span>Class</span>
         </label>
-        <label class="bubble fp">
-          <span>Focus</span>
-          <input id="fp" aria-label="Focus points" inputmode="text" />
-          <span>Points</span>
-        </label>
-        <label class="bubble mp">
-          <span>Magic</span>
-          <input id="mp" aria-label="Magic points" inputmode="text" />
-          <span>Points</span>
-        </label>
+      </section>
+
+      <section class="visibility">
+        <button id="visibleAll" type="button">Visible to All</button>
+        <button id="visibleGm" type="button">GM Only</button>
       </section>
 
       <button id="playerEditable" type="button">Player Editable</button>
@@ -53,10 +70,14 @@
         hpMax: document.querySelector("#hpMax"),
         temp: document.querySelector("#temp"),
         armor: document.querySelector("#armor"),
-        fp: document.querySelector("#fp"),
-        mp: document.querySelector("#mp")
+        fpCurrent: document.querySelector("#fpCurrent"),
+        fpMax: document.querySelector("#fpMax"),
+        mpCurrent: document.querySelector("#mpCurrent"),
+        mpMax: document.querySelector("#mpMax")
       };
       const playerEditable = document.querySelector("#playerEditable");
+      const visibleAll = document.querySelector("#visibleAll");
+      const visibleGm = document.querySelector("#visibleGm");
       let items = [];
       let stats;
       let saving = false;
@@ -66,9 +87,14 @@
         fields.hpMax.value = stats.hp.max;
         fields.temp.value = stats.temp.current;
         fields.armor.value = stats.armor.current;
-        fields.fp.value = stats.fp.current;
-        fields.mp.value = stats.mp.current;
+        fields.fpCurrent.value = stats.fp.current;
+        fields.fpMax.value = stats.fp.max;
+        fields.mpCurrent.value = stats.mp.current;
+        fields.mpMax.value = stats.mp.max;
         playerEditable.disabled = items.length === 0;
+        playerEditable.classList.toggle("active", stats.playerEditable);
+        visibleAll.classList.toggle("active", stats.visibility !== "gm");
+        visibleGm.classList.toggle("active", stats.visibility === "gm");
       }
 
       async function load() {
@@ -107,12 +133,26 @@
       bind(fields.hpMax, "hp", "max");
       bind(fields.temp, "temp", "current");
       bind(fields.armor, "armor", "current");
-      bind(fields.fp, "fp", "current");
-      bind(fields.mp, "mp", "current");
+      bind(fields.fpCurrent, "fp", "current");
+      bind(fields.fpMax, "fp", "max");
+      bind(fields.mpCurrent, "mp", "current");
+      bind(fields.mpMax, "mp", "max");
 
       playerEditable.addEventListener("click", async () => {
         stats.playerEditable = !stats.playerEditable;
-        playerEditable.classList.toggle("active", stats.playerEditable);
+        render();
+        await persist();
+      });
+
+      visibleAll.addEventListener("click", async () => {
+        stats.visibility = "all";
+        render();
+        await persist();
+      });
+
+      visibleGm.addEventListener("click", async () => {
+        stats.visibility = "gm";
+        render();
         await persist();
       });
 

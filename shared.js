@@ -48,7 +48,8 @@ export const EMPTY_STATS = {
   armor: { current: 10, max: 0 },
   fp: { current: 0, max: 0 },
   mp: { current: 0, max: 0 },
-  playerEditable: true
+  playerEditable: true,
+  visibility: "all"
 };
 
 export async function openStatWindow(stat, anchorElementId) {
@@ -93,6 +94,7 @@ export function normalizeStats(raw = EMPTY_STATS) {
     };
   }
   result.playerEditable = raw?.playerEditable !== false;
+  result.visibility = raw?.visibility === "gm" ? "gm" : "all";
   return result;
 }
 
