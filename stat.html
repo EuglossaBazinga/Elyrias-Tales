@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stat Bubble</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <section id="card" class="stat-card"></section>
+      <button id="save" class="primary" type="button">Save</button>
+    </main>
+
+    <script type="module">
+      import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
+      import { STAT_DEFS, getSelectedItems, normalizeStats, percent, readStats, saveStats } from "./shared.js";
+
+      const params = new URLSearchParams(window.location.search);
+      const statKey = params.get("stat") === "mp" ? "mp" : "fp";
+      const card = document.querySelector("#card");
+      const saveButton = document.querySelector("#save");
+      let items = [];
+      let stats = normalizeStats();
+
+      function render() {
+        const def = STAT_DEFS[statKey];
+        const value = stats[statKey];
+        document.title = def.label;
+        saveButton.textContent = `Save ${def.label}`;
+        card.innerHTML = `
+          <div class="stat-row">
+            <div>
+              <h1>${def.title}</h1>
+              <p class="muted">${items.length} selected token(s)</p>
+            </div>
+            <strong style="background:${def.color}">${def.label}</strong>
+          </div>
+          <div class="meter"><span style="--fill:${percent(value)}%;--color:${def.color}"></span></div>
+          <div class="inputs">
+            <label>${def.currentLabel}<input type="number" data-field="current" value="${value.current}" /></label>
+            <label>${def.maxLabel}<input type="number" data-field="max" value="${value.max}" /></label>
+          </div>
+        `;
+        saveButton.disabled = items.length === 0;
+      }
+
+      async function load() {
+        items = await getSelectedItems();
+        stats = normalizeStats(readStats(items[0]));
+        render();
+      }
+
+      card.addEventListener("change", (event) => {
+        const input = event.target.closest("input[data-field]");
+        if (!input) return;
+        stats[statKey][input.dataset.field] = Number(input.value) || 0;
+        render();
+      });
+
+      saveButton.addEventListener("click", async () => {
+        await saveStats(items.map((item) => item.id), stats);
+        await load();
+      });
+
+      OBR.onReady(load);
+    </script>
+  </body>
+</html>
