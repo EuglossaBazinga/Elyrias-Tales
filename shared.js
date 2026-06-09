@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-2";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-3";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -119,7 +119,7 @@ export async function syncOverlaysForItems(itemIds) {
       const stats = readStats(token);
       const signature = overlaySignature(stats);
       const existing = oldByParent.get(token.id) ?? [];
-      if (existing.length >= 7 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
+      if (existing.length >= 9 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
         continue;
       }
 
@@ -176,11 +176,14 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 0.78);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x;
+  const x = token.position.x - Math.round(size * 0.36);
   const y = token.position.y + Math.round(size * 0.74);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
-  const acX = x + barWidth / 2 - acDiameter * 0.05;
+  const thpDiameter = Math.max(18, Math.round(size * 0.28));
+  const acX = x + barWidth / 2 + acDiameter * 0.22;
   const acY = y - Math.round(size * 0.12);
+  const thpX = x - barWidth / 2 - thpDiameter * 0.22;
+  const thpY = acY;
   const visible = stats.visibility !== "gm";
   const common = {
     attachedTo: token.id,
@@ -261,6 +264,28 @@ function buildOverlayItems(token, stats, builders) {
     makeCircle({
       builders,
       ...common,
+      role: "thp-bg",
+      x: thpX,
+      y: thpY,
+      diameter: thpDiameter,
+      color: "#626942",
+      z: 10003
+    }),
+    makeText({
+      builders,
+      ...common,
+      role: "thp-text",
+      x: thpX,
+      y: thpY,
+      text: `${stats.temp.current}`,
+      size: Math.max(8, Math.round(thpDiameter * 0.48)),
+      width: thpDiameter,
+      height: thpDiameter,
+      z: 10004
+    }),
+    makeCircle({
+      builders,
+      ...common,
       role: "ac-bg",
       x: acX,
       y: acY,
@@ -272,8 +297,8 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "ac-text",
-      x: acX - acDiameter * 0.08,
-      y: acY - acDiameter * 0.02,
+      x: acX,
+      y: acY,
       text: `${stats.armor.current}`,
       size: Math.max(8, Math.round(acDiameter * 0.48)),
       width: acDiameter,
@@ -388,6 +413,7 @@ function overlaySignature(stats) {
     stats.mp.current,
     stats.mp.max,
     stats.armor.current,
+    stats.temp.current,
     stats.visibility
   ].join(":");
 }
