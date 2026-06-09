@@ -7,23 +7,27 @@
   <body>
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { EXTENSION_ID, openManager } from "./shared.js";
+      import { BASE_URL, EXTENSION_ID } from "./shared.js";
 
       OBR.onReady(() => {
         OBR.contextMenu.create({
-          id: `${EXTENSION_ID}/open`,
+          id: `${EXTENSION_ID}/edit-stats`,
           icons: [
             {
-              icon: "icon.svg",
-              label: "Stat Bubbles",
+              icon: "https://euglossabazinga.github.io/Elyrias-Tales/icon.svg",
+              label: "Edit Stats",
               filter: {
                 roles: ["GM", "PLAYER"],
                 min: 1
               }
             }
           ],
-          onClick(_, elementId) {
-            openManager(elementId);
+          embed: {
+            url: `${BASE_URL}context.html`,
+            height: 390
+          },
+          onClick() {
+            // The context menu embed handles stat editing directly.
           }
         });
       });

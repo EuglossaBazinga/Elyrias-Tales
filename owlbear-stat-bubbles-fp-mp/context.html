@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Stats</title>
+    <link rel="stylesheet" href="context.css" />
+  </head>
+  <body>
+    <main>
+      <section class="hp-card">
+        <div class="label">Hit Points</div>
+        <div class="hp-inputs">
+          <input id="hpCurrent" aria-label="Current hit points" inputmode="text" />
+          <span>/</span>
+          <input id="hpMax" aria-label="Maximum hit points" inputmode="text" />
+        </div>
+        <div class="hint">& maximum</div>
+      </section>
+
+      <section class="bubble-grid">
+        <label class="bubble temp">
+          <span>Temporary</span>
+          <input id="temp" aria-label="Temporary hit points" inputmode="text" />
+          <span>Hit Points</span>
+        </label>
+        <label class="bubble armor">
+          <span>Armor</span>
+          <input id="armor" aria-label="Armor class" inputmode="text" />
+          <span>Class</span>
+        </label>
+        <label class="bubble fp">
+          <span>Focus</span>
+          <input id="fp" aria-label="Focus points" inputmode="text" />
+          <span>Points</span>
+        </label>
+        <label class="bubble mp">
+          <span>Magic</span>
+          <input id="mp" aria-label="Magic points" inputmode="text" />
+          <span>Points</span>
+        </label>
+      </section>
+
+      <button id="playerEditable" type="button">Player Editable</button>
+    </main>
+
+    <script type="module">
+      import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
+      import { getSelectedItems, readStats, saveStats } from "./shared.js";
+
+      const fields = {
+        hpCurrent: document.querySelector("#hpCurrent"),
+        hpMax: document.querySelector("#hpMax"),
+        temp: document.querySelector("#temp"),
+        armor: document.querySelector("#armor"),
+        fp: document.querySelector("#fp"),
+        mp: document.querySelector("#mp")
+      };
+      const playerEditable = document.querySelector("#playerEditable");
+      let items = [];
+      let stats;
+      let saving = false;
+
+      function render() {
+        fields.hpCurrent.value = stats.hp.current;
+        fields.hpMax.value = stats.hp.max;
+        fields.temp.value = stats.temp.current;
+        fields.armor.value = stats.armor.current;
+        fields.fp.value = stats.fp.current;
+        fields.mp.value = stats.mp.current;
+        playerEditable.disabled = items.length === 0;
+      }
+
+      async function load() {
+        items = await getSelectedItems();
+        stats = readStats(items[0]);
+        render();
+      }
+
+      async function persist() {
+        if (saving || items.length === 0) return;
+        saving = true;
+        await saveStats(items.map((item) => item.id), stats);
+        saving = false;
+      }
+
+      function applyInput(stat, field, rawValue) {
+        const currentValue = stats[stat][field] ?? 0;
+        const value = rawValue.trim();
+        if (/^[+-]\d+$/.test(value)) return currentValue + Number(value);
+        const number = Number(value);
+        return Number.isFinite(number) ? number : currentValue;
+      }
+
+      function bind(input, stat, field) {
+        input.addEventListener("change", async () => {
+          stats[stat][field] = applyInput(stat, field, input.value);
+          render();
+          await persist();
+        });
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") input.blur();
+        });
+      }
+
+      bind(fields.hpCurrent, "hp", "current");
+      bind(fields.hpMax, "hp", "max");
+      bind(fields.temp, "temp", "current");
+      bind(fields.armor, "armor", "current");
+      bind(fields.fp, "fp", "current");
+      bind(fields.mp, "mp", "current");
+
+      playerEditable.addEventListener("click", async () => {
+        stats.playerEditable = !stats.playerEditable;
+        playerEditable.classList.toggle("active", stats.playerEditable);
+        await persist();
+      });
+
+      OBR.onReady(load);
+    </script>
+  </body>
+</html>

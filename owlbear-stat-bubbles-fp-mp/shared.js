@@ -2,6 +2,7 @@ import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
 
 export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
+export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
 
 export const STAT_DEFS = {
   hp: {
@@ -10,6 +11,20 @@ export const STAT_DEFS = {
     currentLabel: "Current HP",
     maxLabel: "Max HP",
     color: "#d84f45"
+  },
+  temp: {
+    label: "THP",
+    title: "Temporary Hit Points",
+    currentLabel: "Temporary HP",
+    maxLabel: "Temporary HP",
+    color: "#8d9461"
+  },
+  armor: {
+    label: "AC",
+    title: "Armor Class",
+    currentLabel: "Armor Class",
+    maxLabel: "Armor Class",
+    color: "#767fb5"
   },
   fp: {
     label: "FP",
@@ -29,25 +44,18 @@ export const STAT_DEFS = {
 
 export const EMPTY_STATS = {
   hp: { current: 0, max: 0 },
+  temp: { current: 0, max: 0 },
+  armor: { current: 10, max: 0 },
   fp: { current: 0, max: 0 },
-  mp: { current: 0, max: 0 }
+  mp: { current: 0, max: 0 },
+  playerEditable: true
 };
-
-export async function openManager(anchorElementId) {
-  await OBR.popover.open({
-    id: `${EXTENSION_ID}/manager`,
-    url: "manager.html",
-    height: 560,
-    width: 380,
-    anchorElementId
-  });
-}
 
 export async function openStatWindow(stat, anchorElementId) {
   const def = STAT_DEFS[stat];
   await OBR.popover.open({
     id: `${EXTENSION_ID}/${stat}`,
-    url: `stat.html?stat=${stat}`,
+    url: `${BASE_URL}stat.html?stat=${stat}`,
     height: 310,
     width: 310,
     anchorElementId,
@@ -78,11 +86,13 @@ export async function saveStats(itemIds, stats) {
 export function normalizeStats(raw = EMPTY_STATS) {
   const result = copyStats(EMPTY_STATS);
   for (const key of Object.keys(result)) {
+    if (typeof result[key] !== "object") continue;
     result[key] = {
       current: numberOrZero(raw?.[key]?.current),
       max: numberOrZero(raw?.[key]?.max)
     };
   }
+  result.playerEditable = raw?.playerEditable !== false;
   return result;
 }
 
