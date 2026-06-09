@@ -106,9 +106,15 @@
       async function persist() {
         if (saving || items.length === 0) return;
         saving = true;
-        await saveStats(items.map((item) => item.id), stats);
-        await syncOverlaysForItems(items.map((item) => item.id));
-        saving = false;
+        try {
+          await saveStats(items.map((item) => item.id), stats);
+          await syncOverlaysForItems(items.map((item) => item.id));
+        } catch (error) {
+          console.error(error);
+          alert(`Overlay error: ${error?.message ?? error}`);
+        } finally {
+          saving = false;
+        }
       }
 
       function applyInput(stat, field, rawValue) {

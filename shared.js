@@ -1,4 +1,4 @@
-import OBR, { buildShape, buildText } from "https://esm.sh/@owlbear-rodeo/sdk";
+import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
 
 export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
@@ -97,33 +97,36 @@ export async function syncAllOverlays() {
 export async function syncOverlaysForItems(itemIds) {
   if (!itemIds.length || overlaySyncing) return;
   overlaySyncing = true;
-  const allItems = await OBR.scene.items.getItems();
-  const tokens = allItems.filter((item) => itemIds.includes(item.id));
-  const oldOverlays = allItems.filter((item) => itemIds.includes(item.metadata?.[OVERLAY_KEY]?.parentId));
-  const oldByParent = new Map();
+  try {
+    const builders = await loadBuilders();
+    if (!builders) return;
 
-  for (const overlay of oldOverlays) {
-    const parentId = overlay.metadata?.[OVERLAY_KEY]?.parentId;
-    if (!oldByParent.has(parentId)) oldByParent.set(parentId, []);
-    oldByParent.get(parentId).push(overlay);
-  }
+    const allItems = await OBR.scene.items.getItems();
+    const tokens = allItems.filter((item) => itemIds.includes(item.id));
+    const oldOverlays = allItems.filter((item) => itemIds.includes(item.metadata?.[OVERLAY_KEY]?.parentId));
+    const oldByParent = new Map();
 
-  const toDelete = [];
-  const overlays = [];
-  for (const token of tokens) {
-    const stats = readStats(token);
-    const signature = overlaySignature(stats);
-    const existing = oldByParent.get(token.id) ?? [];
-    if (existing.length >= 7 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
-      continue;
+    for (const overlay of oldOverlays) {
+      const parentId = overlay.metadata?.[OVERLAY_KEY]?.parentId;
+      if (!oldByParent.has(parentId)) oldByParent.set(parentId, []);
+      oldByParent.get(parentId).push(overlay);
     }
 
-    toDelete.push(...existing.map((item) => item.id));
-    if (!stats.hp.max && !stats.armor.current) continue;
-    overlays.push(...buildOverlayItems(token, stats));
-  }
+    const toDelete = [];
+    const overlays = [];
+    for (const token of tokens) {
+      const stats = readStats(token);
+      const signature = overlaySignature(stats);
+      const existing = oldByParent.get(token.id) ?? [];
+      if (existing.length >= 7 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
+        continue;
+      }
 
-  try {
+      toDelete.push(...existing.map((item) => item.id));
+      if (!stats.hp.max && !stats.armor.current) continue;
+      overlays.push(...buildOverlayItems(token, stats, builders));
+    }
+
     if (toDelete.length > 0) {
       await OBR.scene.items.deleteItems(toDelete);
     }
@@ -154,7 +157,20 @@ export function percent(stat) {
   return Math.max(0, Math.min(100, Math.round((stat.current / stat.max) * 100)));
 }
 
-function buildOverlayItems(token, stats) {
+async function loadBuilders() {
+  try {
+    const sdk = await import("https://esm.sh/@owlbear-rodeo/sdk");
+    if (!sdk.buildShape || !sdk.buildText) return null;
+    return {
+      buildShape: sdk.buildShape,
+      buildText: sdk.buildText
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildOverlayItems(token, stats, builders) {
   const size = getTokenSize(token);
   const barWidth = Math.round(size * 0.9);
   const barHeight = Math.max(7, Math.round(size * 0.12));
@@ -183,6 +199,7 @@ function buildOverlayItems(token, stats) {
 
   return [
     makeRect({
+      builders,
       ...common,
       role: "hp-bg",
       x,
@@ -193,6 +210,7 @@ function buildOverlayItems(token, stats) {
       z: 1
     }),
     makeRect({
+      builders,
       ...common,
       role: "hp-fill",
       x: x - barWidth / 2 + (barWidth * hpPercent) / 2,
@@ -203,6 +221,7 @@ function buildOverlayItems(token, stats) {
       z: 2
     }),
     makeText({
+      builders,
       ...common,
       role: "hp-text",
       x,
@@ -212,6 +231,7 @@ function buildOverlayItems(token, stats) {
       z: 3
     }),
     makeRect({
+      builders,
       ...common,
       role: "fp-line",
       x: x - barWidth / 2 + (barWidth * fpPercent) / 2,
@@ -222,6 +242,7 @@ function buildOverlayItems(token, stats) {
       z: 2
     }),
     makeRect({
+      builders,
       ...common,
       role: "mp-line",
       x: x - barWidth / 2 + (barWidth * mpPercent) / 2,
@@ -232,6 +253,7 @@ function buildOverlayItems(token, stats) {
       z: 2
     }),
     makeCircle({
+      builders,
       ...common,
       role: "ac-bg",
       x: x + barWidth / 2 + Math.round(size * 0.13),
@@ -241,6 +263,7 @@ function buildOverlayItems(token, stats) {
       z: 2
     }),
     makeText({
+      builders,
       ...common,
       role: "ac-text",
       x: x + barWidth / 2 + Math.round(size * 0.13),
@@ -253,7 +276,8 @@ function buildOverlayItems(token, stats) {
 }
 
 function makeRect(options) {
-  const item = buildShape()
+  const item = options.builders.buildShape()
+    .name(`Stat Bubble ${options.role}`)
     .shapeType("RECTANGLE")
     .position({ x: options.x, y: options.y })
     .width(options.width)
@@ -264,15 +288,17 @@ function makeRect(options) {
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
+    .disableAutoZIndex(true)
+    .visible(options.visible)
     .metadata(withOverlayRole(options.metadata, options.role))
+    .zIndex(options.z)
     .build();
-  item.visible = options.visible;
-  item.zIndex = options.z;
   return item;
 }
 
 function makeCircle(options) {
-  const item = buildShape()
+  const item = options.builders.buildShape()
+    .name(`Stat Bubble ${options.role}`)
     .shapeType("CIRCLE")
     .position({ x: options.x, y: options.y })
     .width(options.diameter)
@@ -284,16 +310,21 @@ function makeCircle(options) {
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
+    .disableAutoZIndex(true)
+    .visible(options.visible)
     .metadata(withOverlayRole(options.metadata, options.role))
+    .zIndex(options.z)
     .build();
-  item.visible = options.visible;
-  item.zIndex = options.z;
   return item;
 }
 
 function makeText(options) {
-  const item = buildText()
-    .text(options.text)
+  const item = options.builders.buildText()
+    .name(`Stat Bubble ${options.role}`)
+    .plainText(options.text)
+    .textType("PLAIN")
+    .width("AUTO")
+    .height("AUTO")
     .position({ x: options.x, y: options.y })
     .fontSize(options.size)
     .fontWeight(700)
@@ -306,10 +337,11 @@ function makeText(options) {
     .attachedTo(options.attachedTo)
     .locked(options.locked)
     .disableHit(options.disableHit)
+    .disableAutoZIndex(true)
+    .visible(options.visible)
     .metadata(withOverlayRole(options.metadata, options.role))
+    .zIndex(options.z)
     .build();
-  item.visible = options.visible;
-  item.zIndex = options.z;
   return item;
 }
 
