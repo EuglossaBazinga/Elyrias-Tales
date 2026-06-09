@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-5";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-6";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -70,7 +70,8 @@ export async function openStatWindow(stat, anchorElementId) {
 export async function getSelectedItems() {
   const selectedIds = await OBR.player.getSelection();
   if (!selectedIds || selectedIds.length === 0) return [];
-  return OBR.scene.items.getItems(selectedIds);
+  const items = await OBR.scene.items.getItems(selectedIds);
+  return items.filter(isCharacterItem);
 }
 
 export function readStats(item) {
@@ -89,8 +90,16 @@ export async function saveStats(itemIds, stats) {
 
 export async function syncAllOverlays() {
   const items = await OBR.scene.items.getItems();
+  const characterIds = new Set(items.filter(isCharacterItem).map((item) => item.id));
+  const invalidOverlays = items.filter((item) => {
+    const parentId = item.metadata?.[OVERLAY_KEY]?.parentId ?? item.attachedTo;
+    return item.metadata?.[OVERLAY_KEY] && parentId && !characterIds.has(parentId);
+  });
+  if (invalidOverlays.length > 0) {
+    await OBR.scene.items.deleteItems(invalidOverlays.map((item) => item.id));
+  }
   const tokenIds = items
-    .filter((item) => item.metadata?.[METADATA_KEY] && !item.metadata?.[OVERLAY_KEY])
+    .filter((item) => isCharacterItem(item) && item.metadata?.[METADATA_KEY] && !item.metadata?.[OVERLAY_KEY])
     .map((item) => item.id);
   await syncOverlaysForItems(tokenIds);
 }
@@ -103,12 +112,16 @@ export async function syncOverlaysForItems(itemIds) {
     if (!builders) return;
 
     const allItems = await OBR.scene.items.getItems();
-    const tokens = allItems.filter((item) => itemIds.includes(item.id));
-    const oldOverlays = allItems.filter((item) => itemIds.includes(item.metadata?.[OVERLAY_KEY]?.parentId));
+    const tokens = allItems.filter((item) => itemIds.includes(item.id) && isCharacterItem(item));
+    const characterIds = new Set(tokens.map((item) => item.id));
+    const oldOverlays = allItems.filter((item) => {
+      const parentId = item.metadata?.[OVERLAY_KEY]?.parentId ?? item.attachedTo;
+      return characterIds.has(parentId) || (item.name?.startsWith("Stat Bubble") && itemIds.includes(parentId));
+    });
     const oldByParent = new Map();
 
     for (const overlay of oldOverlays) {
-      const parentId = overlay.metadata?.[OVERLAY_KEY]?.parentId;
+      const parentId = overlay.metadata?.[OVERLAY_KEY]?.parentId ?? overlay.attachedTo;
       if (!oldByParent.has(parentId)) oldByParent.set(parentId, []);
       oldByParent.get(parentId).push(overlay);
     }
@@ -176,13 +189,13 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 1.55);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x;
+  const x = token.position.x + Math.round(size * 0.34);
   const y = token.position.y + Math.round(size * 0.58);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 - acDiameter * 0.05;
   const acY = y - Math.round(size * 0.12);
-  const thpX = acX - thpDiameter * 1.15;
+  const thpX = acX - thpDiameter * 1.05;
   const thpY = acY;
   const visible = stats.visibility !== "gm";
   const common = {
@@ -275,8 +288,8 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "thp-text",
-      x: thpX - thpDiameter * 0.38,
-      y: thpY - thpDiameter * 0.18,
+      x: thpX - thpDiameter * 0.9,
+      y: thpY - thpDiameter * 0.22,
       text: `${stats.temp.current}`,
       size: Math.max(8, Math.round(thpDiameter * 0.48)),
       width: thpDiameter,
@@ -297,8 +310,8 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "ac-text",
-      x: acX - acDiameter * 0.38,
-      y: acY - acDiameter * 0.18,
+      x: acX - acDiameter * 0.9,
+      y: acY - acDiameter * 0.22,
       text: `${stats.armor.current}`,
       size: Math.max(8, Math.round(acDiameter * 0.48)),
       width: acDiameter,
@@ -421,6 +434,10 @@ function overlaySignature(stats) {
 export function numberOrZero(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
+}
+
+function isCharacterItem(item) {
+  return item?.layer === "CHARACTER";
 }
 
 function copyStats(stats) {
