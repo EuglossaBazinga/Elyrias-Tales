@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-3";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-4";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -173,11 +173,11 @@ async function loadBuilders() {
 
 function buildOverlayItems(token, stats, builders) {
   const size = getTokenSize(token);
-  const barWidth = Math.round(size * 0.78);
+  const barWidth = Math.round(size * 1.55);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
   const x = token.position.x - Math.round(size * 0.36);
-  const y = token.position.y + Math.round(size * 0.74);
+  const y = token.position.y + Math.round(size * 0.58);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 + acDiameter * 0.22;
@@ -244,7 +244,7 @@ function buildOverlayItems(token, stats, builders) {
       ...common,
       role: "fp-line",
       x: x - barWidth / 2 + (barWidth * fpPercent) / 2,
-      y: y + barHeight / 2 + lineHeight + 1,
+      y: y + barHeight / 2 + lineHeight / 2,
       width: Math.max(2, barWidth * fpPercent),
       height: lineHeight,
       color: "#f3d640",
@@ -255,7 +255,7 @@ function buildOverlayItems(token, stats, builders) {
       ...common,
       role: "mp-line",
       x: x - barWidth / 2 + (barWidth * mpPercent) / 2,
-      y: y + barHeight / 2 + lineHeight * 2 + 3,
+      y: y + barHeight / 2 + lineHeight * 1.5,
       width: Math.max(2, barWidth * mpPercent),
       height: lineHeight,
       color: "#2d7ff0",
