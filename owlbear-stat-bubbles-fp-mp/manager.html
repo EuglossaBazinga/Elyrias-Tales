@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stat Bubbles</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div>
+          <h1>Stat Bubbles</h1>
+          <p id="selection" class="muted">Select a token.</p>
+        </div>
+        <button id="refresh" type="button">Refresh</button>
+      </header>
+
+      <section id="stats" class="stack"></section>
+
+      <section class="actions">
+        <button id="fpWindow" type="button">FP Window</button>
+        <button id="mpWindow" type="button">MP Window</button>
+      </section>
+
+      <button id="save" class="primary" type="button">Save Stats</button>
+    </main>
+
+    <script type="module">
+      import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
+      import {
+        STAT_DEFS,
+        getSelectedItems,
+        normalizeStats,
+        openStatWindow,
+        percent,
+        readStats,
+        saveStats
+      } from "./shared.js";
+
+      const statsElement = document.querySelector("#stats");
+      const selectionElement = document.querySelector("#selection");
+      const refreshButton = document.querySelector("#refresh");
+      const saveButton = document.querySelector("#save");
+      const fpButton = document.querySelector("#fpWindow");
+      const mpButton = document.querySelector("#mpWindow");
+      let items = [];
+      let stats = normalizeStats();
+
+      function render() {
+        selectionElement.textContent =
+          items.length === 0 ? "Select one or more tokens." : `${items.length} selected token(s)`;
+        statsElement.innerHTML = "";
+
+        for (const [key, def] of Object.entries(STAT_DEFS)) {
+          const value = stats[key];
+          const card = document.createElement("section");
+          card.className = "stat-card";
+          card.innerHTML = `
+            <div class="stat-row">
+              <div>
+                <h2>${def.title}</h2>
+                <p class="muted">${value.current} / ${value.max}</p>
+              </div>
+              <strong style="background:${def.color}">${def.label}</strong>
+            </div>
+            <div class="meter"><span style="--fill:${percent(value)}%;--color:${def.color}"></span></div>
+            <div class="inputs">
+              <label>${def.currentLabel}<input type="number" data-stat="${key}" data-field="current" value="${value.current}" /></label>
+              <label>${def.maxLabel}<input type="number" data-stat="${key}" data-field="max" value="${value.max}" /></label>
+            </div>
+          `;
+          statsElement.append(card);
+        }
+
+        const disabled = items.length === 0;
+        saveButton.disabled = disabled;
+        fpButton.disabled = disabled;
+        mpButton.disabled = disabled;
+      }
+
+      async function load() {
+        items = await getSelectedItems();
+        stats = normalizeStats(readStats(items[0]));
+        render();
+      }
+
+      statsElement.addEventListener("change", (event) => {
+        const input = event.target.closest("input[data-stat]");
+        if (!input) return;
+        stats[input.dataset.stat][input.dataset.field] = Number(input.value) || 0;
+        render();
+      });
+
+      refreshButton.addEventListener("click", load);
+      saveButton.addEventListener("click", async () => {
+        await saveStats(items.map((item) => item.id), stats);
+        await load();
+      });
+      fpButton.addEventListener("click", () => openStatWindow("fp"));
+      mpButton.addEventListener("click", () => openStatWindow("mp"));
+
+      OBR.onReady(load);
+    </script>
+  </body>
+</html>

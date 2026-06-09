@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Stat Bubbles">
+  <rect width="64" height="64" rx="14" fill="#17181c"/>
+  <circle cx="24" cy="25" r="13" fill="#d94f45"/>
+  <circle cx="40" cy="24" r="10" fill="#4c8ed9"/>
+  <circle cx="37" cy="42" r="12" fill="#64b678"/>
+  <path d="M20 25h8M24 21v8M36 24h8M33 38h8M33 43h8" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stat Bubbles background</title>
+  </head>
+  <body>
+    <script type="module">
+      import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
+      import { EXTENSION_ID, openManager } from "./shared.js";
+
+      OBR.onReady(() => {
+        OBR.contextMenu.create({
+          id: `${EXTENSION_ID}/open`,
+          icons: [
+            {
+              icon: "icon.svg",
+              label: "Stat Bubbles",
+              filter: {
+                roles: ["GM", "PLAYER"],
+                min: 1
+              }
+            }
+          ],
+          onClick(_, elementId) {
+            openManager(elementId);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
