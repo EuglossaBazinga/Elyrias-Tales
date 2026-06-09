@@ -8,9 +8,9 @@
   "action": {
     "title": "Stat Bubbles",
     "icon": "https://euglossabazinga.github.io/Elyrias-Tales/icon.svg",
-    "popover": "https://euglossabazinga.github.io/Elyrias-Tales/manager.html",
-    "height": 560,
-    "width": 380
+    "popover": "https://euglossabazinga.github.io/Elyrias-Tales/context.html",
+    "height": 420,
+    "width": 330
   },
   "background_url": "https://euglossabazinga.github.io/Elyrias-Tales/background.html"
 }

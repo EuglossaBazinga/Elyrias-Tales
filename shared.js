@@ -12,6 +12,20 @@ export const STAT_DEFS = {
     maxLabel: "Max HP",
     color: "#d84f45"
   },
+  temp: {
+    label: "THP",
+    title: "Temporary Hit Points",
+    currentLabel: "Temporary HP",
+    maxLabel: "Temporary HP",
+    color: "#8d9461"
+  },
+  armor: {
+    label: "AC",
+    title: "Armor Class",
+    currentLabel: "Armor Class",
+    maxLabel: "Armor Class",
+    color: "#767fb5"
+  },
   fp: {
     label: "FP",
     title: "Focus Points",
@@ -30,19 +44,12 @@ export const STAT_DEFS = {
 
 export const EMPTY_STATS = {
   hp: { current: 0, max: 0 },
+  temp: { current: 0, max: 0 },
+  armor: { current: 10, max: 0 },
   fp: { current: 0, max: 0 },
-  mp: { current: 0, max: 0 }
+  mp: { current: 0, max: 0 },
+  playerEditable: true
 };
-
-export async function openManager(anchorElementId) {
-  await OBR.popover.open({
-    id: `${EXTENSION_ID}/manager`,
-    url: `${BASE_URL}manager.html`,
-    height: 560,
-    width: 380,
-    anchorElementId
-  });
-}
 
 export async function openStatWindow(stat, anchorElementId) {
   const def = STAT_DEFS[stat];
@@ -79,11 +86,13 @@ export async function saveStats(itemIds, stats) {
 export function normalizeStats(raw = EMPTY_STATS) {
   const result = copyStats(EMPTY_STATS);
   for (const key of Object.keys(result)) {
+    if (typeof result[key] !== "object") continue;
     result[key] = {
       current: numberOrZero(raw?.[key]?.current),
       max: numberOrZero(raw?.[key]?.max)
     };
   }
+  result.playerEditable = raw?.playerEditable !== false;
   return result;
 }
 

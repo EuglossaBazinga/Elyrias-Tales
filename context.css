@@ -1,0 +1,134 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f7f5fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: transparent;
+}
+
+main {
+  display: grid;
+  gap: 10px;
+  padding: 8px 10px 10px;
+}
+
+.hp-card {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}
+
+.label,
+.hint,
+.bubble span {
+  color: #c9c2ca;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hp-inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  width: 126px;
+  border: 2px solid #d46a70;
+  border-radius: 14px;
+  background: rgba(132, 54, 59, 0.72);
+  padding: 8px 9px;
+}
+
+.hp-inputs span {
+  color: white;
+  font-size: 19px;
+  font-weight: 850;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.bubble-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.bubble {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.bubble input {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 2px solid var(--ring);
+  background: var(--fill);
+  font-size: 18px;
+}
+
+.bubble span {
+  max-width: 68px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.temp {
+  --ring: #aeb384;
+  --fill: rgba(95, 101, 68, 0.86);
+}
+
+.armor {
+  --ring: #aab0db;
+  --fill: rgba(86, 91, 133, 0.86);
+}
+
+.fp {
+  --ring: #8ada9b;
+  --fill: rgba(56, 126, 72, 0.86);
+}
+
+.mp {
+  --ring: #86b8ef;
+  --fill: rgba(53, 98, 151, 0.86);
+}
+
+button {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f5fb;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+button.active {
+  background: rgba(138, 218, 155, 0.24);
+}
