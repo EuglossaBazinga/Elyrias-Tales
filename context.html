@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="context.css" />
   </head>
   <body>
-    <main>
+    <main id="editor">
       <section class="wide-card hp-card">
         <div class="label">Hit Points</div>
         <div class="hp-inputs">
@@ -84,6 +84,9 @@
 
       <p id="lockedMessage" class="locked-message">These stats are visible to the GM only.</p>
     </main>
+    <main id="privatePanel" class="private-panel" hidden>
+      <p>GM only</p>
+    </main>
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
@@ -102,6 +105,8 @@
       const visibleAll = document.querySelector("#visibleAll");
       const visibleGm = document.querySelector("#visibleGm");
       const lockedMessage = document.querySelector("#lockedMessage");
+      const editor = document.querySelector("#editor");
+      const privatePanel = document.querySelector("#privatePanel");
       let items = [];
       let stats;
       let playerIsGm = false;
@@ -138,6 +143,15 @@
         playerIsGm = isGmRole(await getPlayerRole());
         items = await getSelectedItems();
         stats = readStats(items[0]);
+        if (!playerIsGm && stats.visibility === "gm") {
+          editor.hidden = true;
+          privatePanel.hidden = false;
+          if (OBR.action?.setHeight) await OBR.action.setHeight(56);
+          return;
+        }
+        editor.hidden = false;
+        privatePanel.hidden = true;
+        if (OBR.action?.setHeight) await OBR.action.setHeight(430);
         render();
       }
 

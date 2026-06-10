@@ -21,6 +21,19 @@ main {
   background: #514751;
 }
 
+.private-panel {
+  min-height: 48px;
+  place-items: center;
+}
+
+.private-panel p {
+  margin: 0;
+  color: #c9c2ca;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .wide-card {
   display: grid;
   gap: 5px;
