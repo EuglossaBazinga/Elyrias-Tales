@@ -207,7 +207,7 @@ function buildOverlayItems(token, stats, builders) {
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 - acDiameter * 0.05;
-  const acY = y - Math.round(size * 0.20);
+  const acY = y - Math.round(size * 0.5);
   const thpX = acX - thpDiameter * 1.05;
   const thpY = acY;
   const visible = stats.visibility !== "gm";
