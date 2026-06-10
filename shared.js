@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-7";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-8";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -288,12 +288,13 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "thp-text",
-      x: thpX - thpDiameter * 1.08,
-      y: thpY - thpDiameter * 0.78,
+      x: thpX,
+      y: thpY,
       text: `${stats.temp.current}`,
-      size: Math.max(10, Math.round(thpDiameter * 0.62)),
-      width: thpDiameter,
-      height: thpDiameter,
+      size: Math.max(12, Math.round(thpDiameter * 0.7)),
+      width: thpDiameter * 2.2,
+      height: thpDiameter * 2.2,
+      strokeWidth: 1.5,
       z: 10004
     }),
     makeCircle({
@@ -310,12 +311,13 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "ac-text",
-      x: acX - acDiameter * 1.08,
-      y: acY - acDiameter * 0.78,
+      x: acX,
+      y: acY,
       text: `${stats.armor.current}`,
-      size: Math.max(10, Math.round(acDiameter * 0.62)),
-      width: acDiameter,
-      height: acDiameter,
+      size: Math.max(12, Math.round(acDiameter * 0.7)),
+      width: acDiameter * 2.2,
+      height: acDiameter * 2.2,
+      strokeWidth: 1.5,
       z: 10004
     })
   ];
@@ -380,7 +382,7 @@ function makeText(options) {
     .textAlignVertical("MIDDLE")
     .fillColor("#ffffff")
     .strokeColor("#000000")
-    .strokeWidth(2)
+    .strokeWidth(options.strokeWidth ?? 2)
     .layer("CONTROL")
     .attachedTo(options.attachedTo)
     .locked(options.locked)
