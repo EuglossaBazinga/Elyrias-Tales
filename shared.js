@@ -4,10 +4,11 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-7";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-8";
 const OVERLAY_X_OFFSET = 0.1;
 const OVERLAY_Y_OFFSET = 0.58;
 let overlaySyncing = false;
+const OVERLAY_ROLES = ["hp-bg", "hp-fill", "hp-text", "fp-line", "mp-line", "thp-bg", "thp-text", "ac-bg", "ac-text"];
 
 export const STAT_DEFS = {
   hp: {
@@ -129,20 +130,35 @@ export async function syncOverlaysForItems(itemIds) {
     }
 
     const toDelete = [];
-    const overlays = [];
+    const toAdd = [];
+    const toUpdate = [];
     for (const token of tokens) {
       const stats = readStats(token);
       const existing = oldByParent.get(token.id) ?? [];
-      toDelete.push(...existing.map((item) => item.id));
       if (!stats.hp.max && !stats.armor.current) continue;
-      overlays.push(...buildOverlayItems(token, stats, builders));
+      const desired = buildOverlayItems(token, stats, builders);
+      const reconcile = reconcileOverlaySet(existing, desired);
+      toDelete.push(...reconcile.deleteIds);
+      toAdd.push(...reconcile.addItems);
+      toUpdate.push(...reconcile.updatePairs);
     }
 
     if (toDelete.length > 0) {
       await OBR.scene.items.deleteItems(toDelete);
     }
-    if (overlays.length > 0) {
-      await OBR.scene.items.addItems(overlays);
+    if (toUpdate.length > 0) {
+      await OBR.scene.items.updateItems(
+        toUpdate.map((pair) => pair.id),
+        (items) => {
+          for (const item of items) {
+            const pair = toUpdate.find((candidate) => candidate.id === item.id);
+            if (pair) applyOverlayUpdate(item, pair.next);
+          }
+        }
+      );
+    }
+    if (toAdd.length > 0) {
+      await OBR.scene.items.addItems(toAdd);
     }
   } finally {
     overlaySyncing = false;
@@ -398,6 +414,51 @@ function withOverlayRole(metadata, role) {
       role
     }
   };
+}
+
+function reconcileOverlaySet(existing, desired) {
+  const desiredByRole = new Map(desired.map((item) => [item.metadata?.[OVERLAY_KEY]?.role, item]));
+  const existingByRole = new Map();
+  const deleteIds = [];
+  const updatePairs = [];
+
+  for (const item of existing) {
+    const role = item.metadata?.[OVERLAY_KEY]?.role ?? roleFromName(item.name);
+    if (!OVERLAY_ROLES.includes(role) || existingByRole.has(role)) {
+      deleteIds.push(item.id);
+      continue;
+    }
+    existingByRole.set(role, item);
+  }
+
+  const addItems = [];
+  for (const role of OVERLAY_ROLES) {
+    const next = desiredByRole.get(role);
+    const current = existingByRole.get(role);
+    if (!next) continue;
+    if (!current) {
+      addItems.push(next);
+      continue;
+    }
+    if (current.metadata?.[OVERLAY_KEY]?.signature !== next.metadata?.[OVERLAY_KEY]?.signature) {
+      updatePairs.push({ id: current.id, next });
+    }
+  }
+
+  return { deleteIds, addItems, updatePairs };
+}
+
+function applyOverlayUpdate(item, next) {
+  const originalId = item.id;
+  for (const [key, value] of Object.entries(next)) {
+    if (key !== "id") item[key] = value;
+  }
+  item.id = originalId;
+}
+
+function roleFromName(name = "") {
+  const prefix = "Stat Bubble ";
+  return name.startsWith(prefix) ? name.slice(prefix.length) : "";
 }
 
 function getTokenSize(token) {
