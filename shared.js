@@ -191,7 +191,7 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 1.55);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x + Math.round(size * 6);
+  const x = token.position.x + Math.round(size * 15);
   const y = token.position.y + Math.round(size * 0.58);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
