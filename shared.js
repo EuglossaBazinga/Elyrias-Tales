@@ -5,7 +5,7 @@ export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
 const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-6";
-const OVERLAY_X_OFFSET = 0.10;
+const OVERLAY_X_OFFSET = 15;
 const OVERLAY_Y_OFFSET = 0.58;
 let overlaySyncing = false;
 
@@ -191,8 +191,8 @@ function buildOverlayItems(token, stats, builders) {
   const barWidth = Math.round(size * 1.55);
   const barHeight = Math.max(7, Math.round(size * 0.12));
   const lineHeight = Math.max(2, Math.round(size * 0.035));
-  const x = token.position.x + Math.round(size * 15);
-  const y = token.position.y + Math.round(size * 0.58);
+  const x = token.position.x + Math.round(size * OVERLAY_X_OFFSET);
+  const y = token.position.y + Math.round(size * OVERLAY_Y_OFFSET);
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 - acDiameter * 0.05;
