@@ -7,7 +7,7 @@
   <body>
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { BASE_URL, EXTENSION_ID, syncAllOverlays } from "./shared.js";
+      const { BASE_URL, EXTENSION_ID, syncAllOverlays } = await import(`./shared.js?v=${Date.now()}`);
 
       OBR.onReady(() => {
         syncAllOverlays();

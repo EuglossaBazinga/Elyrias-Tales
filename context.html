@@ -87,7 +87,7 @@
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { getSelectedItems, readStats, saveStats, syncOverlaysForItems } from "./shared.js";
+      const { getSelectedItems, readStats, saveStats, syncOverlaysForItems } = await import(`./shared.js?v=${Date.now()}`);
 
       const fields = {
         hpCurrent: document.querySelector("#hpCurrent"),

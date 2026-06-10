@@ -14,7 +14,7 @@
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import { STAT_DEFS, getSelectedItems, normalizeStats, percent, readStats, saveStats, syncOverlaysForItems } from "./shared.js";
+      const { STAT_DEFS, getSelectedItems, normalizeStats, percent, readStats, saveStats, syncOverlaysForItems } = await import(`./shared.js?v=${Date.now()}`);
 
       const params = new URLSearchParams(window.location.search);
       const statKey = params.get("stat") === "mp" ? "mp" : "fp";

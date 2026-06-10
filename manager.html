@@ -28,7 +28,7 @@
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      import {
+      const {
         STAT_DEFS,
         getSelectedItems,
         normalizeStats,
@@ -37,7 +37,7 @@
         readStats,
         saveStats,
         syncOverlaysForItems
-      } from "./shared.js";
+      } = await import(`./shared.js?v=${Date.now()}`);
 
       const statsElement = document.querySelector("#stats");
       const selectionElement = document.querySelector("#selection");

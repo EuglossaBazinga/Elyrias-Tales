@@ -421,6 +421,8 @@ function getTokenSize(token) {
 function overlaySignature(stats) {
   return [
     OVERLAY_LAYOUT_VERSION,
+    OVERLAY_X_OFFSET,
+    OVERLAY_Y_OFFSET,
     stats.hp.current,
     stats.hp.max,
     stats.fp.current,
