@@ -77,6 +77,19 @@ export async function getSelectedItems() {
   return items.filter(isCharacterItem);
 }
 
+export async function getPlayerRole() {
+  try {
+    if (OBR.player.getRole) return await OBR.player.getRole();
+    return OBR.player.role ?? "PLAYER";
+  } catch {
+    return "PLAYER";
+  }
+}
+
+export function isGmRole(role) {
+  return String(role).toUpperCase() === "GM";
+}
+
 export function readStats(item) {
   return normalizeStats(item?.metadata?.[METADATA_KEY]);
 }

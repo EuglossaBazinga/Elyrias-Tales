@@ -82,12 +82,12 @@
         <button id="visibleGm" type="button">GM Only</button>
       </section>
 
-      <button id="playerEditable" type="button">Player Editable</button>
+      <p id="lockedMessage" class="locked-message">These stats are visible to the GM only.</p>
     </main>
 
     <script type="module">
       import OBR from "https://esm.sh/@owlbear-rodeo/sdk";
-      const { getSelectedItems, readStats, saveStats, syncOverlaysForItems } = await import(`./shared.js?v=${Date.now()}`);
+      const { getPlayerRole, getSelectedItems, isGmRole, readStats, saveStats, syncOverlaysForItems } = await import(`./shared.js?v=${Date.now()}`);
 
       const fields = {
         hpCurrent: document.querySelector("#hpCurrent"),
@@ -99,14 +99,17 @@
         mpCurrent: document.querySelector("#mpCurrent"),
         mpMax: document.querySelector("#mpMax")
       };
-      const playerEditable = document.querySelector("#playerEditable");
       const visibleAll = document.querySelector("#visibleAll");
       const visibleGm = document.querySelector("#visibleGm");
+      const lockedMessage = document.querySelector("#lockedMessage");
       let items = [];
       let stats;
+      let playerIsGm = false;
+      let canEdit = false;
       let saving = false;
 
       function render() {
+        canEdit = playerIsGm || stats.visibility !== "gm";
         setInputValue(fields.hpCurrent, stats.hp.current);
         setInputValue(fields.hpMax, stats.hp.max);
         setInputValue(fields.temp, stats.temp.current);
@@ -115,8 +118,13 @@
         setInputValue(fields.fpMax, stats.fp.max);
         setInputValue(fields.mpCurrent, stats.mp.current);
         setInputValue(fields.mpMax, stats.mp.max);
-        playerEditable.disabled = items.length === 0;
-        playerEditable.classList.toggle("active", stats.playerEditable);
+        for (const input of Object.values(fields)) input.disabled = !canEdit || items.length === 0;
+        document.body.classList.toggle("locked", !canEdit);
+        lockedMessage.hidden = canEdit;
+        visibleAll.hidden = !playerIsGm;
+        visibleGm.hidden = !playerIsGm;
+        visibleAll.disabled = !playerIsGm || items.length === 0;
+        visibleGm.disabled = !playerIsGm || items.length === 0;
         visibleAll.classList.toggle("active", stats.visibility !== "gm");
         visibleGm.classList.toggle("active", stats.visibility === "gm");
       }
@@ -127,13 +135,14 @@
       }
 
       async function load() {
+        playerIsGm = isGmRole(await getPlayerRole());
         items = await getSelectedItems();
         stats = readStats(items[0]);
         render();
       }
 
       async function persist() {
-        if (saving || items.length === 0) return;
+        if (saving || items.length === 0 || !canEdit) return;
         saving = true;
         try {
           await saveStats(items.map((item) => item.id), stats);
@@ -159,6 +168,7 @@
         const previous = wrapper.querySelector(".previous-value");
 
         input.addEventListener("focus", () => {
+          if (!canEdit) return;
           if (input.dataset.editing === "true") return;
           const original = stats[stat][field] ?? 0;
           input.dataset.editing = "true";
@@ -194,20 +204,18 @@
       bind(fields.mpCurrent, "mp", "current");
       bind(fields.mpMax, "mp", "max");
 
-      playerEditable.addEventListener("click", async () => {
-        stats.playerEditable = !stats.playerEditable;
-        render();
-        await persist();
-      });
-
       visibleAll.addEventListener("click", async () => {
+        if (!playerIsGm) return;
         stats.visibility = "all";
+        stats.playerEditable = true;
         render();
         await persist();
       });
 
       visibleGm.addEventListener("click", async () => {
+        if (!playerIsGm) return;
         stats.visibility = "gm";
+        stats.playerEditable = false;
         render();
         await persist();
       });
