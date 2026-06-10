@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-6";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-7";
 let overlaySyncing = false;
 
 export const STAT_DEFS = {
@@ -288,10 +288,10 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "thp-text",
-      x: thpX - thpDiameter * 0.9,
-      y: thpY - thpDiameter * 0.22,
+      x: thpX - thpDiameter * 1.08,
+      y: thpY - thpDiameter * 0.78,
       text: `${stats.temp.current}`,
-      size: Math.max(8, Math.round(thpDiameter * 0.48)),
+      size: Math.max(10, Math.round(thpDiameter * 0.62)),
       width: thpDiameter,
       height: thpDiameter,
       z: 10004
@@ -310,10 +310,10 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "ac-text",
-      x: acX - acDiameter * 0.9,
-      y: acY - acDiameter * 0.22,
+      x: acX - acDiameter * 1.08,
+      y: acY - acDiameter * 0.78,
       text: `${stats.armor.current}`,
-      size: Math.max(8, Math.round(acDiameter * 0.48)),
+      size: Math.max(10, Math.round(acDiameter * 0.62)),
       width: acDiameter,
       height: acDiameter,
       z: 10004
