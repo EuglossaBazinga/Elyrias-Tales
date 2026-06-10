@@ -207,7 +207,7 @@ function buildOverlayItems(token, stats, builders) {
   const acDiameter = Math.max(18, Math.round(size * 0.28));
   const thpDiameter = Math.max(18, Math.round(size * 0.28));
   const acX = x + barWidth / 2 - acDiameter * 0.05;
-  const acY = y - Math.round(size * 0.5);
+  const acY = y - Math.round(size * 0.20);
   const thpX = acX - thpDiameter * 1.05;
   const thpY = acY;
   const visible = stats.visibility !== "gm";
@@ -300,8 +300,8 @@ function buildOverlayItems(token, stats, builders) {
       builders,
       ...common,
       role: "thp-text",
-      x: thpX - thpDiameter * 0.9,
-      y: thpY - thpDiameter * 0.22,
+      x: thpX - thpDiameter * 0.,
+      y: thpY - thpDiameter * 0.,
       text: `${stats.temp.current}`,
       size: Math.max(10, Math.round(thpDiameter * 0.62)),
       width: thpDiameter,
