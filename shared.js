@@ -96,9 +96,13 @@ export function readStats(item) {
 
 export async function saveStats(itemIds, stats) {
   if (!itemIds.length) return;
+  const playerIsGm = isGmRole(await getPlayerRole());
   const normalized = normalizeStats(stats);
   await OBR.scene.items.updateItems(itemIds, (items) => {
     for (const item of items) {
+      const currentStats = readStats(item);
+      if (!playerIsGm && currentStats.visibility === "gm") continue;
+      if (!playerIsGm && normalized.visibility === "gm") continue;
       item.metadata[METADATA_KEY] = normalized;
     }
   });
