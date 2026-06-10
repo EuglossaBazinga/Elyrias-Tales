@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-8";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-9";
 const OVERLAY_X_OFFSET = 0.1;
 const OVERLAY_Y_OFFSET = 0.58;
 let overlaySyncing = false;
@@ -229,7 +229,6 @@ function buildOverlayItems(token, stats, builders) {
   const hpText = `${stats.hp.current}/${stats.hp.max}`;
   const signature = overlaySignature(stats);
   common.metadata[OVERLAY_KEY].signature = signature;
-
   return [
     makeRect({
       builders,
