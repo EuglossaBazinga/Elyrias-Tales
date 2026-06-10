@@ -4,7 +4,7 @@ export const EXTENSION_ID = "com.elyrias-tales.stat-bubbles-fp-mp";
 export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
-const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-6";
+const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-7";
 const OVERLAY_X_OFFSET = 0.1;
 const OVERLAY_Y_OFFSET = 0.58;
 let overlaySyncing = false;
@@ -132,12 +132,7 @@ export async function syncOverlaysForItems(itemIds) {
     const overlays = [];
     for (const token of tokens) {
       const stats = readStats(token);
-      const signature = overlaySignature(stats);
       const existing = oldByParent.get(token.id) ?? [];
-      if (existing.length >= 9 && existing.every((item) => item.metadata?.[OVERLAY_KEY]?.signature === signature)) {
-        continue;
-      }
-
       toDelete.push(...existing.map((item) => item.id));
       if (!stats.hp.max && !stats.armor.current) continue;
       overlays.push(...buildOverlayItems(token, stats, builders));
