@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Edit Stats</title>
-    <link rel="stylesheet" href="context.css" />
+    <link rel="stylesheet" href="context.css?v=145" />
   </head>
   <body>
     <main id="editor">
@@ -113,21 +113,27 @@
       let canEdit = false;
       let saving = false;
 
+      function isPrivateStats() {
+        return !playerIsGm && stats?.visibility === "gm";
+      }
+
       function render() {
-        canEdit = playerIsGm || stats.visibility !== "gm";
-        setInputValue(fields.hpCurrent, stats.hp.current);
-        setInputValue(fields.hpMax, stats.hp.max);
-        setInputValue(fields.temp, stats.temp.current);
-        setInputValue(fields.armor, stats.armor.current);
-        setInputValue(fields.fpCurrent, stats.fp.current);
-        setInputValue(fields.fpMax, stats.fp.max);
-        setInputValue(fields.mpCurrent, stats.mp.current);
-        setInputValue(fields.mpMax, stats.mp.max);
+        const privateStats = isPrivateStats();
+        canEdit = !privateStats && (playerIsGm || stats.visibility !== "gm");
+        document.body.classList.toggle("private-mode", privateStats);
+        setInputValue(fields.hpCurrent, privateStats ? "?" : stats.hp.current);
+        setInputValue(fields.hpMax, privateStats ? "?" : stats.hp.max);
+        setInputValue(fields.temp, privateStats ? "?" : stats.temp.current);
+        setInputValue(fields.armor, privateStats ? "?" : stats.armor.current);
+        setInputValue(fields.fpCurrent, privateStats ? "?" : stats.fp.current);
+        setInputValue(fields.fpMax, privateStats ? "?" : stats.fp.max);
+        setInputValue(fields.mpCurrent, privateStats ? "?" : stats.mp.current);
+        setInputValue(fields.mpMax, privateStats ? "?" : stats.mp.max);
         for (const input of Object.values(fields)) input.disabled = !canEdit || items.length === 0;
         document.body.classList.toggle("locked", !canEdit);
-        lockedMessage.hidden = canEdit;
-        visibleAll.hidden = !playerIsGm;
-        visibleGm.hidden = !playerIsGm;
+        lockedMessage.hidden = canEdit || privateStats;
+        visibleAll.hidden = !playerIsGm || privateStats;
+        visibleGm.hidden = !playerIsGm || privateStats;
         visibleAll.disabled = !playerIsGm || items.length === 0;
         visibleGm.disabled = !playerIsGm || items.length === 0;
         visibleAll.classList.toggle("active", stats.visibility !== "gm");
@@ -143,12 +149,14 @@
         playerIsGm = isGmRole(await getPlayerRole());
         items = await getSelectedItems();
         stats = readStats(items[0]);
-        if (!playerIsGm && stats.visibility === "gm") {
+        if (isPrivateStats()) {
+          render();
           editor.hidden = true;
           privatePanel.hidden = false;
           if (OBR.action?.setHeight) await OBR.action.setHeight(56);
           return;
         }
+        document.body.classList.remove("private-mode");
         editor.hidden = false;
         privatePanel.hidden = true;
         if (OBR.action?.setHeight) await OBR.action.setHeight(430);

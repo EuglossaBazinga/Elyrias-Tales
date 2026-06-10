@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: #514751;
@@ -22,8 +26,17 @@ main {
 }
 
 .private-panel {
+  display: grid;
   min-height: 48px;
   place-items: center;
+}
+
+body.private-mode #editor {
+  display: none !important;
+}
+
+body.private-mode #privatePanel {
+  display: grid !important;
 }
 
 .private-panel p {
