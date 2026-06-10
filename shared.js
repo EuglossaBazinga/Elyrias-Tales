@@ -5,7 +5,7 @@ export const METADATA_KEY = `${EXTENSION_ID}/stats`;
 export const OVERLAY_KEY = `${EXTENSION_ID}/overlay`;
 export const BASE_URL = "https://euglossabazinga.github.io/Elyrias-Tales/";
 const OVERLAY_LAYOUT_VERSION = "layout-2026-06-10-6";
-const OVERLAY_X_OFFSET = 6;
+const OVERLAY_X_OFFSET = 5;
 const OVERLAY_Y_OFFSET = 0.58;
 let overlaySyncing = false;
 
